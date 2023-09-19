@@ -5,23 +5,20 @@ import torchvision
 import torchvision.transforms as transforms
 import autoencoder
 import matplotlib.pyplot as plt
+from dataloader import fetch_test_data
 
-def testModel(model):
+def testModel(model, data_name):
     # Set device configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Load the FashionMNIST dataset and apply transformations
-    test_dataset = torchvision.datasets.FashionMNIST(root='./data', train=False, download=True, transform=transforms.ToTensor())
-
-    # data loaders
-    test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=64, shuffle=True)
+    test_loader = fetch_test_data(data_name)
 
 
-    random_image, random_label = test_dataset[0]
-    plt.figure()
-    plt.imshow(random_image.squeeze().numpy(), cmap='gray')
-    plt.title(random_label)
-    plt.show()
+    # random_image, random_label = test_dataset[0]
+    # plt.figure()
+    # plt.imshow(random_image.squeeze().numpy(), cmap='gray')
+    # plt.title(random_label)
+    # plt.show()
 
 
     # Test the model
@@ -38,5 +35,18 @@ def testModel(model):
             correct += (predicted == labels).sum().item()
 
         print(f"Accuracy of the model on the test images: {(100 * correct / total):.2f}%")
+
+    
+    # with torch.no_grad():
+    #     rand_output = model(torch.tensor([random_image, 1]))
+
+    #     plt.figure(1)
+    #     plt.imshow(random_image.squeeze().numpy(), cmap='gray')
+    #     plt.title(random_label)
+
+    #     plt.figure(2)
+    #     plt.imshow(rand_output.squeeze().numpy(), cmap='gray')
+    #     plt.title("reconstructed")
+    #     plt.show()
 
 

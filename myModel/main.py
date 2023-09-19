@@ -1,23 +1,39 @@
 import torch
-import torch.nn as nn
 import autoencoder
 import train
 import test
 
-def main(test=False):
-    autoEncode = autoencoder.AutoEncoder()
-    model = autoEncode.createModel()
-    finalized = train.trainModel(model)
 
-    if (test):
-        test.testModel(finalized)
+# first focus on compression
 
+def main(num, t=False):
+    SAVE_PATH = 'C:\\Users\\Emily Shao\\Desktop\myModel\\myModel\\'
+    
+    if t:
+        autoEncode = autoencoder.AutoEncoder()
+        model = autoEncode.createModel()
+        model.load_state_dict(torch.load(SAVE_PATH + 'model{num}.pt'))
+        
+        test.testModel(model)
+
+    else:
+        autoEncode = autoencoder.AutoEncoder() 
+        model = autoEncode.createModel()
+        finishedModel = train.trainModel(model) # default train fashionmnist
+
+        torch.save(finishedModel.state_dict(), SAVE_PATH + 'model{num}.pt')
 
 # calculate PSNR
 
 
 if __name__ == "__main__":
-    main()
+    main(0)
+    main(0, t=True)
+
+
+
+
+
 
 
 
@@ -124,9 +140,93 @@ with patchify
 
 
 next steps:
-- calculate PSNR
-- try cross scale structure
+- compression
+    - calculate PSNR
+        - what is the performance on fashionmnist
+        - ex. rgb dataset
+    - then the model may not be good enough
+        - group quantizer
+        - compare performance again
+    - try cross scale structure - need larger images
+    - residual VQ
 
+- classification
+    - transformer
+        - ViT --> used for image classification
+    - classification head
+        - long sequence in the beginning that tells you
+            - when patchified, flatten to sequence
+            - have additional token on sequence (pad)
+            - only use the pad to map to the labels (classify)
+    - Vision transformer article
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+8/21
+dataset = https://github.com/microsoft/DNS-Challenge
+https://github.com/microsoft/DNS-Challenge/blob/master/download-dns-challenge-2.sh 
+
+
+within this folder: /hpc/group/tarokhlab/eys9/data/DNS_CHALLENGE/DNS2021 (has some folders, but not all)
+
+put composed data into the processed folder (like this one): /hpc/group/tarokhlab/eys9/data/DNS_CHALLENGE/processed 
+make another folder
+
+recompose some datasets:
+compose two: train and test
+
+train:
+3 sec audio clips
+180,000 data samples
+
+test:
+10 sec audio clips
+1158 data samples (without overlapping with training data)
+(make sure the speaker is also different from the training data)
+(note that if some test data isn't 10 seconds long, put them together)
+
+for both:
+have (given) proportional subset of each language
+don't cut audio clips (aka if you already make one clip from the first three seconds, discard the rest, avoid audio cuts)
+
+
+
+when loading data:
+simply load them (1d), and compose them 
+need to iterate through all the original files
+
+output: train.pt, test.pt (saving tensor)
+
+shape should be: 
+train -- 180000, 16000*3
+test --- 1158, 16000*10
+
+
+also save these audio clip as actual audio clips that we can hear: .wav files
+start by doing this with the test clips
+
+
+
+
+
+source audio:
+some audio is 48k sampling rate, discard these (don't use!)
+make sure that the data/audio i am using is 16k sampling rate
+
+this is how to get source audio ====> torchaudio.load function --> will return wav form (1d tensor) and sampling rate
+then check sampling rate
+then cut and compose wav form***
+then torchaudio.save ===> saves composed wav tensor as a .wav file (save this, add index in name)
+
+store wav form into output tensor
+
+
+note: train and test data and speaker should be different!!
 
 
 

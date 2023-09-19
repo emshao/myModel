@@ -5,42 +5,38 @@ import torchvision.transforms as transforms
 from model.encoder import Encoder
 from model.quantizer import Quantizer
 from model.decoder import Decoder
+from dataloader import fetch_train_data
 
 class AutoEncoder(nn.Module):
-    def __init__(self):
+    def __init__(self, channel, kernal_sz, strd, pdd):
         super().__init__()
 
-        self.quantizer = Quantizer(8)
+        self.quantizer = Quantizer(512, channel, 0) # numbers??
 
-        # input
-        # torch.Size([64, 1, 28, 28])
-        # torch.Size([64])
+        self.encoder = Encoder(channel, kernal_sz, strd, pdd, self.quantizer)
+        codebook = self.quantizer.return_codebook()
+        self.decoder = Decoder(channel, kernal_sz, strd, pdd, codebook)
 
-        # self.encoder = Encoder(quantizer=self.quantizer)
-        self.encoder = Encoder()
-        self.decoder = Decoder()
-
-        self.loss = nn.CrossEntropyLoss()
-
-        
-
-
+        self.loss = nn.CrossEntropyLoss() # how to implement?????
     
+   
     def forward(self, input):
         '''
-        image: torch.Size([64, 1, 28, 28])
-        labels: torch.Size([64])
-        
+        input size = torch.Size([batch, channels, height, width])
+        label size = torch.Size([batch])
+
+        remember forward is called iteratively on the batches, model is updated with generalized changes after each batch 
+
         '''
 
         encoded = self.encoder(input)
-        # print(encoded.shape)
+        decoded = self.decoder(encoded)
+
+        return decoded
 
 
-        # decoded = self.decoder(encoded)
 
-        return encoded
-        # return decoded
+
 
     def createModel(self):
         model = AutoEncoder()
@@ -48,16 +44,17 @@ class AutoEncoder(nn.Module):
     
 
 
-# if __name__ == "__main__":
-#     obj = AutoEncoder()
-#     # Load the FashionMNIST dataset and apply transformations
-#     train_dataset = torchvision.datasets.FashionMNIST(root='./data', train=True, download=True, transform=transforms.ToTensor())
-
-#     # data loaders
-#     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
 
 
-#     for i, (images, labels) in enumerate(train_loader):
-#         print(images.shape)
-#         print(labels.shape)
-#         break
+if __name__ == "__main__":
+    # obj = AutoEncoder()
+    
+    # check size of each batch and image
+    train_loader = fetch_train_data("FashionMNIST", 128)    # torch.Size([128, 1, 28, 28])
+    train_loader2 = fetch_train_data("CIFAR-10", 128)       # torch.Size([128, 3, 32, 32])
+
+    for i, (images, labels) in enumerate(train_loader2):
+        print("Batch:", i)
+        print(images.shape)
+        print(labels.shape)
+        break
